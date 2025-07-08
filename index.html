@@ -321,7 +321,7 @@
             card.querySelector('img').src = club.image || serverConfig.defaultClubImageURL;
             card.querySelector('h3').textContent = club.name;
             card.querySelector('.desc-text').textContent = club.description;
-            card.querySelector('.teacher-info').innerHTML = `🧑‍🏫 <span class="font-medium">อ. ${club.teacher || '-'}</span>`;
+            card.querySelector('.teacher-info').innerHTML = `🧑‍🏫 <span class="font-medium">${club.teacher || '-'}</span>`;
             card.querySelector('.location-info').innerHTML = `📍 <span class="font-medium">${club.location || '-'}</span>`;
             const badge = card.querySelector('.absolute');
             if (isRegistered) { badge.textContent = '✅ ลงทะเบียนแล้ว'; badge.className += ' bg-[var(--primary)] text-[var(--primary-fg)]'; }
