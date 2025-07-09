@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ระบบห้องเรียนออนไลน์</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -35,6 +36,7 @@
         .aspect-w-16 { position: relative; padding-bottom: 56.25%; }
         .aspect-h-9 { }
         .aspect-w-16 > iframe { position: absolute; width: 100%; height: 100%; top: 0; left: 0; }
+        .profile-pic { width: 80px; height: 80px; border-radius: 9999px; object-fit: cover; border: 3px solid var(--primary); box-shadow: var(--shadow-md); }
     </style>
 </head>
 <body class="antialiased">
@@ -48,6 +50,7 @@
             <div class="flex justify-between items-center">
                 <div class="flex items-center gap-3"><span class="text-3xl">🏫</span><div><h1 id="headerSiteTitle" class="text-lg font-bold"></h1><p id="headerAcademicYear" class="text-sm text-[var(--text-subtle)]"></p></div></div>
                 <div class="flex items-center gap-2">
+                    <button id="profileBtn" class="hidden btn btn-secondary !p-2 rounded-full" title="โปรไฟล์ของฉัน"><span class="material-symbols-outlined">account_circle</span></button>
                     <div id="userInfo" class="hidden items-center gap-3"><span id="userName" class="font-semibold hidden sm:inline"></span><button id="logoutBtn" class="btn btn-danger !py-1.5 !px-3">🚪 ออกจากระบบ</button></div>
                     <div id="loginSection"><button id="loginBtn" class="btn btn-primary">🔐 เข้าสู่ระบบ</button></div>
                     <button id="themeToggle" class="btn btn-secondary !p-2 rounded-full" title="สลับธีม"></button>
@@ -83,6 +86,7 @@
             <div class="flex items-start justify-between p-4 border-b border-[var(--border-default)]"><h3 class="text-xl font-bold text-[var(--primary)]">🔎 ยืนยันการลงทะเบียน</h3><button id="closeConfirmModal" class="btn btn-secondary !p-2 rounded-full -mr-2 -mt-2"><span class="material-symbols-outlined">close</span></button></div>
             <div class="p-6 space-y-4 overflow-y-auto max-h-[75vh]">
                 <h4 id="confirmClubName" class="text-2xl font-bold"></h4>
+                <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs mb-2"><span id="confirmCourseCode" class="font-mono p-1 bg-[var(--bg-ui)] rounded"></span><span id="confirmCredits" class="font-semibold p-1 bg-[var(--bg-ui)] rounded"></span></div>
                 <div class="text-sm space-y-2 text-[var(--text-subtle)]"><p>🧑‍🏫 <span class="font-semibold text-[var(--text-default)]">ครูประจำวิชา:</span> <span id="confirmTeacher"></span></p><p>📍 <span class="font-semibold text-[var(--text-default)]">สถานที่:</span> <span id="confirmLocation"></span></p><p>🗓️ <span class="font-semibold text-[var(--text-default)]">วัน/เวลา:</span> <span id="confirmDateTime"></span></p></div>
                 <div><div class="flex justify-between items-center mb-1"><label class="font-semibold text-sm">จำนวนที่รับสมัคร:</label><span id="confirmCapacityText" class="font-bold text-sm"></span></div><div class="w-full bg-[var(--bg-ui)] rounded-full h-4 overflow-hidden border border-[var(--border-strong)]"><div id="confirmCapacityBar" class="bg-[var(--primary)] h-full rounded-full transition-all duration-500"></div></div></div>
                 <div class="bg-[var(--bg-ui)] p-4 rounded-lg max-h-32 overflow-y-auto"><p id="confirmDescription" class="text-sm"></p></div>
@@ -97,7 +101,15 @@
         <div class="modal-box w-full max-w-2xl">
             <img id="lessonImage" src="" alt="Club Image" class="w-full h-48 object-cover">
             <div class="flex items-start justify-between p-4 border-b border-[var(--border-default)]">
-                <div><h3 id="lessonClubName" class="text-2xl font-bold text-[var(--primary)]"></h3><p id="lessonClubTeacher" class="text-sm text-[var(--text-subtle)]"></p><p id="lessonLevel" class="text-xs font-semibold py-1 px-2.5 bg-[var(--bg-ui)] rounded-full inline-block mt-2"></p></div>
+                <div>
+                    <h3 id="lessonClubName" class="text-2xl font-bold text-[var(--primary)]"></h3>
+                    <p id="lessonClubTeacher" class="text-sm text-[var(--text-subtle)]"></p>
+                    <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs mt-2">
+                        <span id="lessonLevel" class="font-semibold py-1 px-2.5 bg-[var(--bg-ui)] rounded-full inline-block"></span>
+                        <span id="lessonCourseCode" class="font-mono p-1 bg-[var(--bg-ui)] rounded"></span>
+                        <span id="lessonCredits" class="font-semibold p-1 bg-[var(--bg-ui)] rounded"></span>
+                    </div>
+                </div>
                 <button id="closeLessonModal" class="btn btn-secondary !p-2 rounded-full"><span class="material-symbols-outlined">close</span></button>
             </div>
             <div class="p-6 space-y-6 overflow-y-auto max-h-[60vh]">
@@ -107,7 +119,11 @@
                     <div class="p-3 bg-[var(--bg-ui)] rounded-lg flex items-center justify-center flex-col"><p class="text-sm text-[var(--text-subtle)]">ชั่วโมงเรียน</p><p id="lessonHours" class="font-bold text-2xl text-[var(--primary)]"></p></div>
                 </div>
                 <div><h4 class="font-bold mb-2">📚 หัวข้อบทเรียน</h4><div id="lessonTopics" class="prose prose-sm max-w-none p-4 bg-[var(--bg-ui)] rounded-lg text-[var(--text-default)] space-y-1"></div></div>
-                <div class="flex flex-col sm:flex-row gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <a id="lessonPreTestLink" href="#" target="_blank" class="btn btn-secondary flex-1 !py-2.5 hidden"><span class="material-symbols-outlined">quiz</span> แบบทดสอบก่อนเรียน</a>
+                    <a id="lessonPostTestLink" href="#" target="_blank" class="btn btn-secondary flex-1 !py-2.5 hidden"><span class="material-symbols-outlined">emoji_events</span> แบบทดสอบหลังเรียน</a>
+                </div>
+                <div class="flex flex-col sm:flex-row gap-4 mt-4">
                     <a id="lessonSyllabusLink" href="#" target="_blank" class="btn btn-secondary flex-1 !py-2.5 hidden"><span class="material-symbols-outlined">description</span> โครงสร้างรายวิชา</a>
                     <a id="lessonMaterialsLink" href="#" target="_blank" class="btn btn-secondary flex-1 !py-2.5 hidden"><span class="material-symbols-outlined">folder_zip</span> เอกสารประกอบ</a>
                 </div>
@@ -124,6 +140,26 @@
         <div class="card !p-6 mb-8"><div class="grid grid-cols-1 md:grid-cols-3 gap-4"><input type="text" id="searchClub" class="form-input" placeholder="🔎 ค้นหาชื่อวิชา, ครู..."><select id="categoryFilter" class="form-select"><option value="all">ทุกหมวดหมู่</option></select><select id="levelFilter" class="form-select"><option value="all">ทุกระดับชั้น</option></select></div></div>
         <div id="clubList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
     </main>
+
+    <!-- Admin Modal -->
+    <div id="adminModal" class="modal-overlay"><div class="modal-box !w-full !max-w-md text-center p-8"><h3 class="text-2xl font-bold mb-2">🔑 ยินดีต้อนรับผู้ดูแลระบบ</h3><p class="text-[var(--text-subtle)] mb-6">คุณได้เข้าสู่ระบบในฐานะผู้ดูแลระบบ</p><a id="adminSheetLink" href="#" target="_blank" class="btn btn-primary w-full !py-3 !text-lg"><span class="material-symbols-outlined">settings</span> จัดการระบบห้องเรียน</a><button id="closeAdminModal" class="btn btn-secondary w-full mt-3">ปิด</button></div></div>
+
+    <!-- User Profile Modal -->
+    <div id="profileModal" class="modal-overlay"><div class="modal-box !w-full !max-w-lg"><div class="flex items-center justify-between p-4 border-b border-[var(--border-default)]"><h3 class="text-xl font-bold text-[var(--primary)]">โปรไฟล์ของฉัน</h3><button id="closeProfileModal" class="btn btn-secondary !p-2 rounded-full"><span class="material-symbols-outlined">close</span></button></div><div class="p-6 space-y-6 overflow-y-auto max-h-[75vh]"><div class="flex flex-col sm:flex-row items-center gap-6"><img id="profileImage" src="" alt="Profile Picture" class="profile-pic"><div class="flex-grow w-full"><h4 id="profileName" class="text-2xl font-bold"></h4><p id="profileId" class="text-sm text-[var(--text-subtle)]"></p></div></div><div class="space-y-4"><div><label class="text-sm font-medium">ลิงก์รูปโปรไฟล์</label><input type="text" id="profileImageUrlInput" class="form-input" placeholder="วาง URL รูปภาพที่นี่"></div><div><label class="text-sm font-medium">เปลี่ยนรหัสผ่าน (กรอกเพื่อเปลี่ยน)</label><input type="password" id="profilePasswordInput" class="form-input" placeholder="••••••••"></div><button id="saveProfileBtn" class="btn btn-primary w-full">บันทึกการเปลี่ยนแปลง</button></div><div><h5 class="font-semibold mb-2">รายวิชาที่ลงทะเบียน</h5><div id="profileCourseList" class="space-y-3"></div></div></div></div></div>
+
+    <!-- Congrats Modal -->
+    <div id="congratsModal" class="modal-overlay">
+        <div class="modal-box !w-full !max-w-md text-center p-8 relative overflow-visible">
+            <canvas id="congratsCanvas" class="absolute inset-0 w-full h-full"></canvas>
+            <!-- MODIFIED: Wrapped content in a relatively positioned div to ensure it appears above the canvas -->
+            <div class="relative">
+                <span class="text-7xl mb-4 inline-block">🎉</span>
+                <h3 id="congratsMessage" class="text-xl font-bold text-[var(--primary)]"></h3>
+                <p class="text-[var(--text-subtle)] mt-1">เก่งมาก! ไปต่อกันเลย!</p>
+                <button id="closeCongratsModal" class="btn btn-primary w-full mt-6">ปิด</button>
+            </div>
+        </div>
+    </div>
     
     <!-- Footer -->
     <footer class="text-center py-8 px-4 text-sm text-[var(--text-subtle)] border-t border-[var(--border-default)] mt-12">
@@ -162,7 +198,8 @@
     let currentUser = null;
     let serverConfig = {};
     const elements = {};
-    
+    let completionStatus = JSON.parse(localStorage.getItem('completionStatus')) || {};
+
     document.addEventListener('DOMContentLoaded', () => {
         cacheElements();
         setupEventListeners();
@@ -186,14 +223,16 @@
                  throw new Error(result.error || 'API returned an error');
             }
 
-            switch(action) {
-                case 'getInitialData': handleInitialData(result.data); break;
-                case 'loginStudent':
-                case 'loginGeneralUser':
-                case 'registerStudent':
-                case 'registerGeneralUser': handleAuthSuccess(result); break;
-                case 'registerForClub': handleRegClubSuccess(result); break;
-                case 'cancelClubRegistration': handleCancelClubSuccess(result); break;
+            if (result.admin === true) {
+                handleAdminLoginSuccess(result);
+            } else {
+                switch(action) {
+                    case 'getInitialData': handleInitialData(result.data); break;
+                    case 'loginStudent': case 'loginGeneralUser': case 'registerStudent': case 'registerGeneralUser': handleAuthSuccess(result); break;
+                    case 'registerForClub': handleRegClubSuccess(result); break;
+                    case 'cancelClubRegistration': handleCancelClubSuccess(result); break;
+                    case 'updateUserProfile': handleProfileUpdateSuccess(result); break;
+                }
             }
             showLoadingState(false);
 
@@ -213,7 +252,13 @@
     }
 
     function cacheElements() {
-        const ids = ['loadingOverlay','loadingMessage','headerSiteTitle','headerAcademicYear','themeToggle','userInfo','userName','logoutBtn','loginSection','loginBtn','authModal','closeAuthModal','switchToStudentAuth','switchToGeneralAuth','studentAuthContainer','generalAuthContainer','studentLoginForm','studentLoginId','studentLoginPassword','submitStudentLogin','showStudentRegister','studentRegisterForm','studentRegId','studentRegName','studentRegClass','studentRegPassword','submitStudentRegister','showStudentLogin','generalLoginForm','generalLoginEmail','generalLoginPassword','submitGeneralLogin','showGeneralRegister','generalRegisterForm','generalRegName','generalRegEmail','generalRegPassword','submitGeneralRegister','showGeneralLogin','welcomeBanner','welcomeName','registeredClubSection','registeredClubList','searchClub','categoryFilter','levelFilter','clubList','notification','notificationIcon','notificationMessage','clubCardTemplate','lessonModal','closeLessonModal','lessonImage','lessonClubName','lessonClubTeacher','lessonLevel','lessonDescription','lessonPlayLink','lessonHours','lessonTopics','lessonSyllabusLink','lessonMaterialsLink','confirmModal','confirmClubName','confirmTeacher','confirmLocation','confirmDateTime','confirmCapacityText','confirmCapacityBar','confirmDescription','cancelRegBtn','confirmRegBtn', 'closeConfirmModal', 'confirmVideoContainer', 'confirmVideoEmbed'];
+        const ids = ['loadingOverlay','loadingMessage','headerSiteTitle','headerAcademicYear','themeToggle','userInfo','userName','logoutBtn','loginSection','loginBtn','authModal','closeAuthModal','switchToStudentAuth','switchToGeneralAuth','studentAuthContainer','generalAuthContainer','studentLoginForm','studentLoginId','studentLoginPassword','submitStudentLogin','showStudentRegister','studentRegisterForm','studentRegId','studentRegName','studentRegClass','studentRegPassword','submitStudentRegister','showStudentLogin','generalLoginForm','generalLoginEmail','generalLoginPassword','submitGeneralLogin','showGeneralRegister','generalRegisterForm','generalRegName','generalRegEmail','generalRegPassword','submitGeneralRegister','showGeneralLogin','welcomeBanner','welcomeName','registeredClubSection','registeredClubList','searchClub','categoryFilter','levelFilter','clubList','notification','notificationIcon','notificationMessage','clubCardTemplate',
+        'lessonModal','closeLessonModal','lessonImage','lessonClubName','lessonClubTeacher','lessonLevel','lessonDescription','lessonPlayLink','lessonHours','lessonTopics','lessonSyllabusLink','lessonMaterialsLink', 'lessonPreTestLink', 'lessonPostTestLink', 'lessonCourseCode', 'lessonCredits',
+        'confirmModal','confirmClubName','confirmTeacher','confirmLocation','confirmDateTime','confirmCapacityText','confirmCapacityBar','confirmDescription','cancelRegBtn','confirmRegBtn', 'closeConfirmModal', 'confirmVideoContainer', 'confirmVideoEmbed', 'confirmCourseCode', 'confirmCredits',
+        'adminModal', 'adminSheetLink', 'closeAdminModal',
+        'profileBtn', 'profileModal', 'closeProfileModal', 'profileImage', 'profileName', 'profileId', 'profileImageUrlInput', 'profilePasswordInput', 'saveProfileBtn', 'profileCourseList',
+        'congratsModal', 'congratsCanvas', 'congratsMessage', 'closeCongratsModal'
+        ];
         ids.forEach(id => { const el = document.getElementById(id); if(el) elements[id] = el; });
     }
 
@@ -239,6 +284,11 @@
         elements.confirmRegBtn.addEventListener('click', () => { const clubId = parseInt(elements.confirmRegBtn.dataset.clubId, 10); handleCloseConfirmModal(); handleRegisterForClub(clubId); });
         elements.closeConfirmModal.addEventListener('click', handleCloseConfirmModal);
         elements.cancelRegBtn.addEventListener('click', handleCloseConfirmModal);
+        elements.profileBtn.addEventListener('click', showProfileModal);
+        elements.closeProfileModal.addEventListener('click', () => elements.profileModal.classList.remove('visible'));
+        elements.closeAdminModal.addEventListener('click', () => elements.adminModal.classList.remove('visible'));
+        elements.closeCongratsModal.addEventListener('click', () => elements.congratsModal.classList.remove('visible'));
+        elements.saveProfileBtn.addEventListener('click', handleProfileUpdate);
     }
     
     function applySiteConfiguration() {
@@ -263,12 +313,14 @@
             elements.loginSection.classList.add('hidden');
             elements.userInfo.classList.remove('hidden');
             elements.userName.textContent = currentUser.name;
+            elements.profileBtn.classList.remove('hidden');
             elements.welcomeBanner.classList.remove('hidden');
             elements.welcomeName.textContent = currentUser.name;
             updateRegisteredClubUI();
         } else {
             elements.loginSection.classList.remove('hidden');
             elements.userInfo.classList.add('hidden');
+            elements.profileBtn.classList.add('hidden');
             elements.welcomeBanner.classList.add('hidden');
             elements.registeredClubSection.classList.add('hidden');
         }
@@ -321,7 +373,7 @@
             card.querySelector('img').src = club.image || serverConfig.defaultClubImageURL;
             card.querySelector('h3').textContent = club.name;
             card.querySelector('.desc-text').textContent = club.description;
-            card.querySelector('.teacher-info').innerHTML = `🧑‍🏫 <span class="font-medium">${club.teacher || '-'}</span>`;
+            card.querySelector('.teacher-info').innerHTML = `🧑‍🏫 <span class="font-medium">อ. ${club.teacher || '-'}</span>`;
             card.querySelector('.location-info').innerHTML = `📍 <span class="font-medium">${club.location || '-'}</span>`;
             const badge = card.querySelector('.absolute');
             if (isRegistered) { badge.textContent = '✅ ลงทะเบียนแล้ว'; badge.className += ' bg-[var(--primary)] text-[var(--primary-fg)]'; }
@@ -350,6 +402,8 @@
     
     function showConfirmationModal(club) {
         elements.confirmClubName.textContent = club.name;
+        elements.confirmCourseCode.textContent = `รหัสวิชา: ${club.courseCode || 'N/A'}`;
+        elements.confirmCredits.textContent = `หน่วยกิต: ${club.credits || 'N/A'}`;
         elements.confirmTeacher.textContent = club.teacher;
         elements.confirmLocation.textContent = club.location;
         elements.confirmDateTime.textContent = `${club.day || '-'} / ${club.time || '-'}`;
@@ -381,12 +435,16 @@
         elements.lessonClubName.textContent = club.name;
         elements.lessonClubTeacher.textContent = `ครูประจำวิชา: ${club.teacher}`;
         elements.lessonLevel.textContent = `👥 ${getLevelName(club.level)}`;
+        elements.lessonCourseCode.textContent = `รหัสวิชา: ${club.courseCode || 'N/A'}`;
+        elements.lessonCredits.textContent = `หน่วยกิต: ${club.credits || 'N/A'}`;
         elements.lessonDescription.textContent = club.description;
         elements.lessonHours.textContent = club.hours || '-';
         elements.lessonTopics.innerHTML = club.topics || 'ไม่มีข้อมูล';
         updateLinkButton(elements.lessonPlayLink, club.playLink);
         updateLinkButton(elements.lessonSyllabusLink, club.syllabusPdf);
         updateLinkButton(elements.lessonMaterialsLink, club.materialsPdf);
+        updateLinkButton(elements.lessonPreTestLink, club.preTestLink);
+        updateLinkButton(elements.lessonPostTestLink, club.postTestLink);
         elements.lessonModal.classList.add('visible');
     }
 
@@ -420,35 +478,50 @@
         console.error("Server Error:", error);
     }
 
-    // --- Action Handlers (เรียกใช้ fetchApi) ---
-    function handleLogout() { currentUser = null; updateUIForUser(); showNotification('info', 'ออกจากระบบเรียบร้อย'); }
-    function handleStudentLogin() { const payload = { id: elements.studentLoginId.value, password: elements.studentLoginPassword.value }; if (!payload.id || !payload.password) return showNotification('error', 'กรุณากรอกข้อมูลให้ครบถ้วน'); fetchApi('loginStudent', payload); }
-    function handleStudentRegister() { const payload = { id: elements.studentRegId.value, name: elements.studentRegName.value, class: elements.studentRegClass.value, password: elements.studentRegPassword.value }; if (!payload.id || !payload.name || !payload.class || !payload.password) return showNotification('error', 'กรุณากรอกข้อมูลให้ครบถ้วน'); fetchApi('registerStudent', payload); }
-    function handleGeneralLogin() { const payload = { email: elements.generalLoginEmail.value, password: elements.generalLoginPassword.value }; if (!payload.email || !payload.password) return showNotification('error', 'กรุณากรอกข้อมูลให้ครบถ้วน'); fetchApi('loginGeneralUser', payload); }
-    function handleGeneralRegister() { const payload = { name: elements.generalRegName.value, email: elements.generalRegEmail.value, password: elements.generalRegPassword.value }; if (!payload.name || !payload.email || !payload.password) return showNotification('error', 'กรุณากรอกข้อมูลให้ครบถ้วน'); fetchApi('registerGeneralUser', payload); }
-    function handleRegisterForClub(clubId) { if (!currentUser) return; fetchApi('registerForClub', { userId: currentUser.id, clubId, userType: currentUser.userType }); }
-    function handleCancelRegistration(clubId, clubName) { if (!currentUser || !confirm(`ยืนยันการยกเลิก "${clubName}"?`)) return; fetchApi('cancelClubRegistration', { userId: currentUser.id, clubId, userType: currentUser.userType }); }
-    
-    // --- Result Handlers (จัดการข้อมูลที่ได้จาก API) ---
+    function handleAdminLoginSuccess(result) {
+        elements.authModal.classList.remove('visible');
+        elements.adminSheetLink.href = result.sheetUrl;
+        elements.adminModal.classList.add('visible');
+    }
+
     function handleAuthSuccess(result) { 
         currentUser = result.data; 
         if (!Array.isArray(currentUser.registeredClub)) currentUser.registeredClub = []; 
-        elements.authModal.classList.remove('visible'); 
+        elements.authModal.classList.remove('visible');
         updateUIForUser(); 
         showNotification('success', `ยินดีต้อนรับ, ${currentUser.name}!`); 
     }
+
+    function handleLogout() { 
+        currentUser = null;
+        updateUIForUser(); 
+        showNotification('info', 'ออกจากระบบเรียบร้อย'); 
+    }
+
     function handleRegClubSuccess(result) { 
         currentUser.registeredClub = result.data.allUserClubs; 
         updateLocalClubData(result.data.updatedClubData); 
         updateUIForUser(); 
+        if (elements.profileModal.classList.contains('visible')) { showProfileModal(); }
         showNotification('success', 'ลงทะเบียนสำเร็จ!'); 
     }
+
     function handleCancelClubSuccess(result) { 
         currentUser.registeredClub = result.data.remainingUserClubs; 
         updateLocalClubData(result.data.updatedClubData); 
         updateUIForUser(); 
+        if (elements.profileModal.classList.contains('visible')) { showProfileModal(); }
         showNotification('info', 'ยกเลิกการลงทะเบียนแล้ว'); 
     }
+    
+    function handleProfileUpdateSuccess(result) {
+        currentUser = result.data;
+        elements.profilePasswordInput.value = '';
+        showProfileModal();
+        updateUIForUser();
+        showNotification('success', 'อัปเดตโปรไฟล์สำเร็จแล้ว!');
+    }
+
     function updateLocalClubData(data) { 
         if (!data?.id || !allClubs) return; 
         const index = allClubs.findIndex(c => c.id === data.id); 
@@ -457,6 +530,98 @@
             allClubs[index].capacity = data.capacity;
         }
     }
+
+    function showProfileModal() {
+        if (!currentUser) return;
+        elements.profileImage.src = currentUser.profileImageUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name)}&background=8b5cf6&color=fff&bold=true`;
+        elements.profileName.textContent = currentUser.name;
+        elements.profileId.textContent = `ID: ${currentUser.id}`;
+        elements.profileImageUrlInput.value = currentUser.profileImageUrl || '';
+        elements.profilePasswordInput.value = '';
+        const courseList = elements.profileCourseList;
+        courseList.innerHTML = '';
+        if (currentUser.registeredClub.length === 0) {
+            courseList.innerHTML = `<p class="text-center text-sm text-[var(--text-subtle)]">คุณยังไม่ได้ลงทะเบียนเรียน</p>`;
+        } else {
+            currentUser.registeredClub.forEach(clubId => {
+                const club = allClubs.find(c => c.id === clubId);
+                if (!club) return;
+                const item = document.createElement('div');
+                item.className = 'flex items-center justify-between bg-[var(--bg-ui)] p-3 rounded-lg';
+                const isCompleted = completionStatus[clubId] === true;
+                item.innerHTML = `
+                    <span class="font-semibold">${club.name}</span>
+                    <button data-club-id="${club.id}" data-club-name="${club.name}" class="btn-complete btn ${isCompleted ? 'btn-secondary' : 'btn-primary'} !py-1 !px-2 !text-xs" ${isCompleted ? 'disabled' : ''}>
+                        ${isCompleted ? '✅ เรียนจบแล้ว' : 'ติ๊กเมื่อเรียนจบ'}
+                    </button>
+                `;
+                item.querySelector('.btn-complete').addEventListener('click', handleMarkAsComplete);
+                courseList.appendChild(item);
+            });
+        }
+        elements.profileModal.classList.add('visible');
+    }
+
+    function handleMarkAsComplete(event) {
+        const button = event.target;
+        const clubId = button.dataset.clubId;
+        const clubName = button.dataset.clubName;
+        completionStatus[clubId] = true;
+        localStorage.setItem('completionStatus', JSON.stringify(completionStatus));
+        button.textContent = '✅ เรียนจบแล้ว';
+        button.disabled = true;
+        button.classList.remove('btn-primary');
+        button.classList.add('btn-secondary');
+        showCongratsModal(clubName);
+    }
+
+    function showCongratsModal(clubName) {
+        elements.congratsMessage.textContent = `ขอแสดงความยินดี กับคุณ ${currentUser.name} ที่สำเร็จการเรียนในรายวิชา ${clubName}!`;
+        elements.congratsModal.classList.add('visible');
+        const myConfetti = confetti.create(elements.congratsCanvas, { resize: true, useWorker: true });
+        const duration = 2 * 1000;
+        const end = Date.now() + duration;
+        (function frame() {
+            myConfetti({ particleCount: 2, angle: 60, spread: 55, origin: { x: 0 } });
+            myConfetti({ particleCount: 2, angle: 120, spread: 55, origin: { x: 1 } });
+            if (Date.now() < end) { requestAnimationFrame(frame); }
+        }());
+    }
+    
+    // --- Action Handlers (เรียกใช้ fetchApi) ---
+    function handleProfileUpdate() {
+        if (!currentUser) return;
+        const newImageUrl = elements.profileImageUrlInput.value;
+        const newPassword = elements.profilePasswordInput.value;
+
+        const payload = {
+            userId: currentUser.id,
+            userType: currentUser.userType,
+            updates: {}
+        };
+        
+        if (newImageUrl !== (currentUser.profileImageUrl || '')) {
+            payload.updates.profileImageUrl = newImageUrl;
+        }
+        if (newPassword) {
+            payload.updates.password = newPassword;
+        }
+
+        if (Object.keys(payload.updates).length === 0) {
+            showNotification('info', 'ไม่มีข้อมูลที่เปลี่ยนแปลง');
+            return;
+        }
+
+        fetchApi('updateUserProfile', payload);
+    }
+
+    function handleStudentLogin() { const payload = { id: elements.studentLoginId.value, password: elements.studentLoginPassword.value }; if (!payload.id || !payload.password) return showNotification('error', 'กรุณากรอกข้อมูลให้ครบถ้วน'); fetchApi('loginStudent', payload); }
+    function handleStudentRegister() { const payload = { id: elements.studentRegId.value, name: elements.studentRegName.value, class: elements.studentRegClass.value, password: elements.studentRegPassword.value }; if (!payload.id || !payload.name || !payload.class || !payload.password) return showNotification('error', 'กรุณากรอกข้อมูลให้ครบถ้วน'); fetchApi('registerStudent', payload); }
+    function handleGeneralLogin() { const payload = { email: elements.generalLoginEmail.value, password: elements.generalLoginPassword.value }; if (!payload.email || !payload.password) return showNotification('error', 'กรุณากรอกข้อมูลให้ครบถ้วน'); fetchApi('loginGeneralUser', payload); }
+    function handleGeneralRegister() { const payload = { name: elements.generalRegName.value, email: elements.generalRegEmail.value, password: elements.generalRegPassword.value }; if (!payload.name || !payload.email || !payload.password) return showNotification('error', 'กรุณากรอกข้อมูลให้ครบถ้วน'); fetchApi('registerGeneralUser', payload); }
+    function handleRegisterForClub(clubId) { if (!currentUser) return; fetchApi('registerForClub', { userId: currentUser.id, clubId, userType: currentUser.userType }); }
+    function handleCancelRegistration(clubId, clubName) { if (!currentUser || !confirm(`ยืนยันการยกเลิก "${clubName}"?`)) return; fetchApi('cancelClubRegistration', { userId: currentUser.id, clubId, userType: currentUser.userType }); }
+
     </script>
 </body>
 </html>
